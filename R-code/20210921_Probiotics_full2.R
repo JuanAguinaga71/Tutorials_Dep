@@ -192,7 +192,7 @@ for(i in 1:length(petreatments)){
   #  d <- SensorContributionTongue(fullData = daData, da1, corner = "") ####esta sirve para crear contribucion de wavelengths
     
     
-    #Ir al apartado de LDA outlayers y correr las lineas:
+    #Ir al apartado de LDA outiers y correr las lineas:
     #plotFDAmodel(da1, projCVres = TRUE, col = sampleColor[tri], col2 = sampleColor[-tri], pch = 16 , pch2 = 1)
     #identify(da1$scoorsVal)
     
