@@ -273,6 +273,7 @@ fullData_cal<- ssc(data, C_Repl %in% c("R3"), include=FALSE)
 fullData_test<- ssc(data, C_Repl %in% c("R3"), include=TRUE)
 
 cu<-gdmm(fullData_cal, getap(do.pca = F, do.pls=T, pca.colorBy =cb, pls.regOn="Y_microb_log", pls.ncomp= 9, pls.valid="C_samplename"))
+plot_pls(cu, pg.fns= "fullData_PLS_by_Prob")
 plot_pls_indepPred(fullData_test, cu, pg.fns= "fullData_PLSind_by_Prob")
 
 
