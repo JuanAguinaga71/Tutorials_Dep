@@ -1,14 +1,15 @@
-LDA PARA VARIOS PRETRATAMIENTOS
-FROM ZSANE
-MODIFIED JPAB 16-11-2023
+# LDA PARA VARIOS PRETRATAMIENTOS
+# FROM ZSANE
+# MODIFIED JPAB 16-11-2023
+# 
+# #Seleccion de Dataset: 
+# Pea_Day3, Pea_Day5, Pea_Day9                     GR<- "C_Temp_Humidity"
+# Pea_T1H1, Pea_T1H2, Pea_T2H1, Pea_T2H2           GR<- "C_Day"
+# fullData_Pea_start                               GR<- "C_Day"     GR<- "C_Temperature_Humidity_Day"       
 
-#Seleccion de Dataset: 
-Pea_Day3, Pea_Day5, Pea_Day9                     GR<- "C_Temp_Humidity"
-Pea_T1H1, Pea_T1H2, Pea_T2H1, Pea_T2H2           GR<- "C_Day"
-fullData_Pea_start                               GR<- "C_Day"     GR<- "C_Temperature_Humidity_Day"       
-
-Datasetname<-"Pea_Day5"
-fullDataLDA<-Pea_Day5 
+Datasetname<-"Pea_Day9"
+Wavelength<-"1300_1600"
+fullDataLDA<-Pea_Day9 
 
 #Seleccion de pretratamientos
 
@@ -67,7 +68,7 @@ for(i in 1:length(petreatments)){
       dn<- which(a[,2]==max(a[,2]))[1]
       
       valid <- "C_Repeat"
-            
+      
       nrG <- nrow(unique(fullData$header[GR])) #how many groups do you have in your classification model
       
       nvG <- nrow(unique(fullData$header[valid])) #how many groups do you have within your validation group
@@ -89,15 +90,14 @@ for(i in 1:length(petreatments)){
       
       #GR by C_typecode; valid by "C_Repeat"
       
-      pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"), Datasetname,"_", GR,"_.pdf"))
-      
+      pdf(paste0("results", paste0(" --", petreatments[[i]], collapse = ""),paste0("--- ", Datasetname,", ",GR, ", ", Wavelength, collapse = "_"),".pdf"))
       #dev.off()
       tranind <- levels(fullData$header[[valid]])
       
       #dn=50
       #j=1
-
-#Bucle interno para iterar sobre grupos de validacion 
+      
+      #Bucle interno para iterar sobre grupos de validacion 
       for (j in 1:nvG) {
             
             ind  <-tranind[j] ##chooses which group to leave out forvalidation
@@ -115,7 +115,7 @@ for(i in 1:length(petreatments)){
             confval_ave <- apply(confval, c(1,2), mean)
             #(confval_ave <- round(confval_ave/colSums(confval_ave)*100, 1))
             
-#Bucle interno para iterar sobre grupos en el modelo de clasificacion (determinato por GR)            
+            #Bucle interno para iterar sobre grupos en el modelo de clasificacion (determinato por GR)            
             
             for(k in 1:nrG){ 
                   conf1_ave[, k] <- round(conf1_ave[, k]/sum(conf1_ave[, k])*100, 2)
@@ -133,14 +133,12 @@ for(i in 1:length(petreatments)){
       
       
       #GR by C_typecode; valid by "C_Repl"
-      write.xlsx(conf, file = paste0("results", paste0(petreatments[[i]], collapse = "_"), Datasetname,"_", GR,"_.xlsx"))
-
+      write.xlsx(conf, file = paste0("results", paste0(" --", petreatments[[i]], collapse = ""),paste0("--- ", Datasetname,", ",GR, ", ", Wavelength, collapse = "_"),".xlsx"))
       dev.off()
-      
-}
+}      
+
 #1)copiar y pegar los resultados individuales desde results 
 #a carpeta LDA_excel_results
 ################argumento de donde tomar LDA_excel_results
 #2)crear carpeta LDA_summary para que ahi se elexcel de resultados
-impLDAres("results/LDA_excel_results", name = "Day9, C_Temp_Humidity 1300,1600")
-
+#impLDAres("results/LDA_excel_results", name = "Day9, C_Temp_Humidity 1300,1600")
