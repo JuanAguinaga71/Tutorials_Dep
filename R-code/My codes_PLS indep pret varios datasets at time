@@ -1,0 +1,53 @@
+# PLS FOR SEVERAL DATASETS AT THE TIME FOR NORMAL AND INDEPENDENT PREDICTION:)
+# Creation Date:16-11-2023
+#Version 1.0
+# by JPAB
+
+
+# Lista de datasets y sus respectivos pls.colorBy y pls.ncomp
+dataset_list <- list(
+      fullData_Pea_start = c(colorBy = "C_Temperature_Humidity", ncomp = 5),
+      Pea_T2H1 = c(colorBy = "C_Day", ncomp = 8),
+      Pea_T2 = c(colorBy = "C_Day", ncomp = 5),
+      Pea_T2 = c(colorBy = "C_Day",ncomp = 5)
+)
+
+# Lista de variables objetivo
+target_variables <- c("Y_Total_Chlorophyll", "Y_pH", "Y_Total_Carotene", "Y_MoistureC_percent")
+
+# Contador para números consecutivos en el nombre del PDF
+pdf_counter <- 1
+
+# Bucle externo para iterar sobre los datasets
+for (dataset_name in names(dataset_list)) {
+      # Obtener el valor de pls.colorBy para el dataset actual
+      pls_colorBy <- dataset_list[[dataset_name]]
+      pls_colorBy<-pls_colorBy[1]
+      pls_colorBy<-as.list(pls_colorBy)
+      pls_colorBy<-pls_colorBy[[1]]
+      # Obtener el valor de pls.ncomp para el dataset actual
+      pls_ncomp <- dataset_list[[dataset_name]]
+      pls_ncomp<-pls_ncomp[2]
+      pls_ncomp<-as.integer(as.list(pls_ncomp))
+      pls_ncomp<-pls_ncomp[[1]]
+      
+      # Crear el objeto *_test para cada dataset
+      assign(paste(dataset_name, "_test", sep = ""), ssc(get(dataset_name), C_Repeat %in% c("R2"), include = TRUE))
+      
+      # Bucle interno para iterar sobre las variables objetivo
+      for (target_variable in target_variables) {
+            cu <- gdmm(get(dataset_name), 
+                       getap(do.pca = FALSE, do.pls = TRUE, pca.colorBy = cb, 
+                             pls.regOn = target_variable, pls.valid = "C_Repeat", 
+                             #pls.ncomp=pls_ncomp,  #uncoment to perform specific pls.ncomp
+                             pls.colorBy = pls_colorBy))
+            
+            plot_function_name <- paste(dataset_name, "_PLSind_by_", target_variable, "_", pdf_counter, ".pdf", sep = "")
+            
+            plot_pls(cu, pg.fns = plot_function_name)
+            plot_pls_indepPred(get(paste(dataset_name, "_test", sep = "")), cu, pg.fns = plot_function_name)
+            
+            # Incrementar el contador para el siguiente PDF
+            pdf_counter <- pdf_counter + 1
+      }
+}
