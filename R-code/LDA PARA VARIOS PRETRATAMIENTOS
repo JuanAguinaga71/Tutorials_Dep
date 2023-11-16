@@ -1,0 +1,146 @@
+LDA PARA VARIOS PRETRATAMIENTOS
+FROM ZSANE
+MODIFIED JPAB 16-11-2023
+
+#Seleccion de Dataset: 
+Pea_Day3, Pea_Day5, Pea_Day9                     GR<- "C_Temp_Humidity"
+Pea_T1H1, Pea_T1H2, Pea_T2H1, Pea_T2H2           GR<- "C_Day"
+fullData_Pea_start                               GR<- "C_Day"     GR<- "C_Temperature_Humidity_Day"       
+
+Datasetname<-"Pea_Day5"
+fullDataLDA<-Pea_Day5 
+
+#Seleccion de pretratamientos
+
+#Todos los tratamientos
+petreatments <- list(c("sgol@2-13-0"), c("sgol@2-17-0"), c("sgol@2-21-0"), c("snv"), c("msc"), c("deTr"), c("deTr", "snv"), c("deTr", "msc"),
+                     c("sgol@2-13-0", "snv"), c("sgol@2-17-0",  "snv"), c("sgol@2-21-0","snv"), c("sgol@2-13-0", "msc"), c("sgol@2-17-0",  "msc"), c("sgol@2-21-0","msc"),
+                     c("sgol@2-13-0", "deTr"), c("sgol@2-17-0",  "deTr"), c("sgol@2-21-0","deTr"),
+                     c("sgol@2-13-0", "deTr","snv"), c("sgol@2-17-0", "deTr", "snv"), c("sgol@2-21-0","deTr", "snv"),
+                     c("sgol@2-13-0", "deTr", "msc"), c("sgol@2-17-0",  "deTr", "msc"), c("sgol@2-21-0","deTr", "msc"),
+                     
+                     c("sgol@2-21-0", "sgol@2-21-1"), c("sgol@2-21-0", "sgol@2-21-2"),
+                     c("sgol@2-21-0", "sgol@2-13-1"), c("sgol@2-21-0", "sgol@2-13-2"),
+                     c("sgol@2-21-0", "sgol@2-17-1"), c("sgol@2-21-0", "sgol@2-17-2"),
+                     
+                     c("sgol@2-13-0", "sgol@2-21-1"),c("sgol@2-13-0", "sgol@2-21-2"),
+                     c("sgol@2-13-0", "sgol@2-13-1"),c("sgol@2-13-0", "sgol@2-13-2"),
+                     c("sgol@2-13-0", "sgol@2-17-1"),c("sgol@2-13-0", "sgol@2-17-2"),
+                     
+                     c("sgol@2-17-0", "sgol@2-21-1"),c("sgol@2-17-0", "sgol@2-21-2"),
+                     c("sgol@2-17-0", "sgol@2-17-1"),  c("sgol@2-17-0", "sgol@2-17-2"),
+                     c("sgol@2-17-0", "sgol@2-13-1"),  c("sgol@2-17-0", "sgol@2-13-2"))
+
+#Seleccion mas importantes pretreatments
+petreatments <- list(c("sgol@2-13-0"), c("sgol@2-17-0"), c("sgol@2-21-0"), c("snv"), c("msc"), c("deTr"), c("deTr", "snv"), c("deTr", "msc"),
+                     c("sgol@2-13-0", "snv"), c("sgol@2-17-0",  "snv"), c("sgol@2-21-0","snv"), c("sgol@2-13-0", "msc"), c("sgol@2-17-0",  "msc"), c("sgol@2-21-0","msc"),
+                     c("sgol@2-13-0", "deTr"), c("sgol@2-17-0",  "deTr"), c("sgol@2-21-0","deTr"),
+                     c("sgol@2-13-0", "deTr","snv"), c("sgol@2-17-0", "deTr", "snv"), c("sgol@2-21-0","deTr", "snv"),
+                     c("sgol@2-13-0", "deTr", "msc"), c("sgol@2-17-0",  "deTr", "msc"), c("sgol@2-21-0","deTr", "msc"))
+
+#Seleccion pretreatments de prueba
+petreatments <- list(c("sgol@2-39-0"), c("sgol@2-39-0", "msc"),c("msc"))
+
+
+#Bucle externo para iterar sobre los pretratamientos
+
+#i=1
+for(i in 1:length(petreatments)){
+      
+      pret <- petreatments[[i]]
+      
+      cu <- gdmm(fullDataLDA, getap(dpt.pre = pret))
+      
+      #plot_pca(cu, pg.fns = paste0(petreatments[[i]], collapse = "_"))
+      data  <- getcd(cu, 1)
+      
+      fullDatadout2 <- data
+      
+      fullData <- 1
+      fullData$header <- fullDatadout2$header
+      fullData$colRep <- fullDatadout2$colRep
+      fullData$NIR <- fullDatadout2$NIR
+      
+      GR <- "C_Temp_Humidity"
+      
+      a <- daOptima(fullData,GR,N=30)
+      dn<- which(a[,2]==max(a[,2]))[1]
+      
+      valid <- "C_Repeat"
+            
+      nrG <- nrow(unique(fullData$header[GR])) #how many groups do you have in your classification model
+      
+      nvG <- nrow(unique(fullData$header[valid])) #how many groups do you have within your validation group
+      
+      conf1 <- confval <- array(NA, c(nrG, nrG, nvG))
+      
+      
+      colnames(conf1) <- levels(fullData$header[[GR]])
+      rownames(conf1) <- levels(fullData$header[[GR]])
+      colnames(confval) <- levels(fullData$header[[GR]])
+      rownames(confval) <- levels(fullData$header[[GR]])
+      
+      
+      sampleColor<- fullData$colRep[[GR]]
+      #pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"),  "_950-1650_fullData_groupval.pdf"))
+      #pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"),  "_950-1650_N_groupval.pdf"))
+      #pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"),  "_950-1650_A_groupval.pdf"))
+      #pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"),  "_950-1650_P_groupval.pdf"))
+      
+      #GR by C_typecode; valid by "C_Repeat"
+      
+      pdf(paste0("results", paste0(petreatments[[i]], collapse = "_"), Datasetname,"_", GR,"_.pdf"))
+      
+      #dev.off()
+      tranind <- levels(fullData$header[[valid]])
+      
+      #dn=50
+      #j=1
+
+#Bucle interno para iterar sobre grupos de validacion 
+      for (j in 1:nvG) {
+            
+            ind  <-tranind[j] ##chooses which group to leave out forvalidation
+            tri <- -which(fullData$header[[valid]] == ind) #gets the rows that belongs to de ind (tri=training index)
+            da1 <- FDA_PCAmodels(fullData, ClassVar = GR, NrPCs = 1:dn,  TranInd = tri)
+            plotFDAmodel2(da1, groups= fullData$header[[GR]][tri], projCVres = TRUE, col = sampleColor[tri], col2 = sampleColor[-tri], cex = 1.2)
+            
+            #legend("topleft", legend= unique(dadata$P_Type), col = unique(dadata$col$P_Type), pch = 16, cex = 1)
+            conf1[,,j] <- da1$confusion
+            confval[,,j] <- da1$confusionVal
+            #plotFDAmodel(da1, projCVres = TRUE, col = dadata$col$Sample)
+            #legend("bottomright", legend= unique(dadata$Sample), col = unique(dadata$col$Sample), pch = 16, cex = 0.8
+            conf1_ave <- apply(conf1, MARGIN = c(1,2), mean)
+            #(conf1_ave2 <- round(conf1_ave/colSums(conf1_ave)*100, 1))
+            confval_ave <- apply(confval, c(1,2), mean)
+            #(confval_ave <- round(confval_ave/colSums(confval_ave)*100, 1))
+            
+#Bucle interno para iterar sobre grupos en el modelo de clasificacion (determinato por GR)            
+            
+            for(k in 1:nrG){ 
+                  conf1_ave[, k] <- round(conf1_ave[, k]/sum(conf1_ave[, k])*100, 2)
+                  
+                  confval_ave[, k] <- round(confval_ave[, k]/sum(confval_ave[, k])*100, 2)
+                  
+            }
+            
+            accuracy_c <- sum(diag(conf1_ave))/sum(conf1_ave)*100
+            
+            accuracy_cv <-sum(diag(confval_ave))/sum(confval_ave)*100
+      }
+      
+      conf <- list(ave_c =conf1_ave, ave_cv = confval_ave, recognition = accuracy_c, prediction= accuracy_cv)
+      
+      
+      #GR by C_typecode; valid by "C_Repl"
+      write.xlsx(conf, file = paste0("results", paste0(petreatments[[i]], collapse = "_"), Datasetname,"_", GR,"_.xlsx"))
+
+      dev.off()
+      
+}
+#1)copiar y pegar los resultados individuales desde results 
+#a carpeta LDA_excel_results
+################argumento de donde tomar LDA_excel_results
+#2)crear carpeta LDA_summary para que ahi se elexcel de resultados
+impLDAres("results/LDA_excel_results", name = "Day9, C_Temp_Humidity 1300,1600")
+
