@@ -104,7 +104,8 @@ for(i in 1:length(petreatments)){
             tri <- -which(fullData$header[[valid]] == ind) #gets the rows that belongs to de ind (tri=training index)
             da1 <- FDA_PCAmodels(fullData, ClassVar = GR, NrPCs = 1:dn,  TranInd = tri)
             plotFDAmodel2(da1, groups= fullData$header[[GR]][tri], projCVres = TRUE, col = sampleColor[tri], col2 = sampleColor[-tri], cex = 1.2)
-            
+            d <- SensorContributionTongue(fullData = daData, da1, corner = "") ####esta sirve para crear contribucion de wavelengths
+
             #legend("topleft", legend= unique(dadata$P_Type), col = unique(dadata$col$P_Type), pch = 16, cex = 1)
             conf1[,,j] <- da1$confusion
             confval[,,j] <- da1$confusionVal
