@@ -141,4 +141,4 @@ for(i in 1:length(petreatments)){
 #a carpeta LDA_excel_results
 ################argumento de donde tomar LDA_excel_results
 #2)crear carpeta LDA_summary para que ahi se elexcel de resultados
-#impLDAres("results/LDA_excel_results", name = "Day9, C_Temp_Humidity 1300,1600")
+impLDAres("results/LDA_excel_results", name = paste0("--- ", Datasetname,", ",GR, ", ", Wavelength, collapse = "_"))
