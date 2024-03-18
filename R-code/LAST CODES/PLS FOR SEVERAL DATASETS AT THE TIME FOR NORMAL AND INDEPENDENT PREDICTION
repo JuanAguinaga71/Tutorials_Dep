@@ -1,1 +1,62 @@
+# PLS FOR SEVERAL DATASETS AT THE TIME FOR NORMAL AND INDEPENDENT PREDICTION:)
+# Creation Date:16-11-2023
+# by JPAB
+
+
+
+# #Seleccion de Dataset:                           #Seleccion de color pls.Colorby
+# fullData_Pea_start_NP                            GR<- "C_Day"     GR<- "C_Temperature_Humidity_Day"       
+# Pea_Day3, Pea_Day5, Pea_Day9                     GR<-C_Temperature_Humidity     GR<- "C_Temp_Humidity"
+# Pea_T1H1, Pea_T1H2, Pea_T2H1, Pea_T2H2           GR<- "C_Day"
+
+#Pea_Day1_5_9
+#
+# Lista de datasets y sus respectivos pls.colorBy y pls.ncomp
+dataset_list <- list(
+      Pea_Day1_5_9 = c(colorBy = "C_Temperature_Humidity_Day", ncomp = "optimo")#,
+      #Pea_Day9 = c(colorBy = "C_Temperature_Humidity", ncomp = 7)
+)
+
+# Lista de variables objetivo
+#target_variables <- c("Y_Total_Chlorophyll", "Y_pH", "Y_Total_Carotene", "Y_MoistureC_percent")
+target_variables <- c("Y_MoistureC_percent","Y_Chlorophyll_A", "Y_Chlorophyll_B", "Y_Total_Carotene")
+
+#target_variables <- c("Y_MoistureC_percent")
+
+# Contador para números consecutivos en el nombre del PDF
+pdf_counter <- 21
+
+# Bucle externo para iterar sobre los datasets
+for (dataset_name in names(dataset_list)) {
+      # Obtener el valor de pls.colorBy para el dataset actual
+      pls_colorBy <- dataset_list[[dataset_name]]
+      pls_colorBy<-pls_colorBy[1]
+      pls_colorBy<-as.list(pls_colorBy)
+      pls_colorBy<-pls_colorBy[[1]]
+      # Obtener el valor de pls.ncomp para el dataset actual
+      pls_ncomp <- dataset_list[[dataset_name]]
+      pls_ncomp<-pls_ncomp[2]
+      pls_ncomp<-as.integer(as.list(pls_ncomp))
+      pls_ncomp<-pls_ncomp[[1]]
+      
+      # Crear el objeto *_test para cada dataset
+      assign(paste(dataset_name, "_test", sep = ""), ssc(get(dataset_name), C_Repeat %in% c("R4"), include = TRUE))
+      
+      # Bucle interno para iterar sobre las variables objetivo
+      for (target_variable in target_variables) {
+            cu <- gdmm(get(dataset_name), 
+                       getap(do.pca = FALSE, do.pls = TRUE, pca.colorBy = cb, 
+                             pls.regOn = target_variable, pls.valid = "C_Repeat", 
+                        #     pls.ncomp=pls_ncomp,  #uncoment to perform specific pls.ncomp
+                             pls.colorBy = pls_colorBy))
+            
+            plot_function_name <- paste(dataset_name,"---", pdf_counter,"---","_PLSind_by_", target_variable, "_", "ncomp=",pls_ncomp, ".pdf", sep = "")
+            
+            plot_pls(cu, pg.fns = plot_function_name)
+            plot_pls_indepPred(get(paste(dataset_name, "_test", sep = "")), cu, pg.fns = plot_function_name)
+            
+            # Incrementar el contador para el siguiente PDF
+            pdf_counter <- pdf_counter + 1
+      }
+}
 
