@@ -1,0 +1,149 @@
+#Option 2: PLSR (can perform several pretreatment at the time)
+#validation by "C_Repl" 
+
+source("C:/PC only not in onedrive/heavy projects/Codes/forpls.R")
+library(pls)
+
+Wavelength<- "1300_1600"
+
+# #Seleccion de Dataset:                           #Seleccion de color pls.Colorby
+# fullData_Pea_start_NP                            GR<- "C_Day"     GR<- "C_Temperature_Humidity_Day"       
+# Pea_Day3, Pea_Day5, Pea_Day9                     GR<-C_Temperature_Humidity     GR<- "C_Temp_Humidity"
+# Pea_T1H1, Pea_T1H2, Pea_T2H1, Pea_T2H2           GR<- "C_Day"
+
+fullDataPLS<-fullData_Pea_start_NP
+fullDataPLS<- reColor(fullDataPLS)
+DatasetName1<- "fullData_Pea_start_NP"
+
+GR<- "C_Temperature_Humidity_Day"
+#GR<- "C_Day"
+# #Seleccion de variable de regresion:
+#Y_MoistureC_percent
+#Y_Total_Chlorophyll
+#Y_Total_Carotene
+#Y_Chlorophyll_A
+#Y_Chlorophyll_B
+
+#regon <- list(c("Y_MoistureC_percent", "Y_Total_Chlorophyll", "Y_Chlorophyll_A", "Y_Chlorophyll_B", "Y_Total_Carotene"))
+regon<-  list(c("Y_pH", "Y_Length", "Y_Length_Scan"))
+regon<-  list(c("Y_pH"))
+
+#validate <- list(c(3), "LOO", "C_Group");list("C_samplename")
+validate <- list("C_Repeat")
+#petreatments <- list(c("sgol@2-39-0", "msc"),c("msc"))
+petreatments <- list(c("sgol@2-27-0"), c("sgol@2-33-0"), c("sgol@2-39-0"), 
+                     c("msc"), c("deTr"), c("deTr", "msc"),
+                     c("sgol@2-27-0", "msc"), c("sgol@2-33-0",  "msc"), c("sgol@2-39-0","msc"),
+                     c("sgol@2-27-0", "deTr"), c("sgol@2-33-0",  "deTr"), c("sgol@2-39-0","deTr"),
+                     c("sgol@2-27-0", "deTr", "msc"), c("sgol@2-33-0",  "deTr", "msc"), c("sgol@2-39-0","deTr", "msc"),
+                     
+                     c("sgol@2-39-0", "sgol@2-39-1"), c("sgol@2-39-0", "sgol@2-39-2"),
+                     c("sgol@2-39-0", "sgol@2-27-1"), 
+                     c("sgol@2-39-0", "sgol@2-27-2"),#
+                     c("sgol@2-39-0", "sgol@2-33-1"), c("sgol@2-39-0", "sgol@2-33-2"),
+                     
+                     c("sgol@2-27-0", "sgol@2-39-1"),c("sgol@2-27-0", "sgol@2-39-2"),
+                     c("sgol@2-27-0", "sgol@2-27-1"),c("sgol@2-27-0", "sgol@2-27-2"),
+                     c("sgol@2-27-0", "sgol@2-33-1"),
+                     c("sgol@2-27-0", "sgol@2-33-2"),#
+                     
+                     c("sgol@2-33-0", "sgol@2-39-1"),c("sgol@2-33-0", "sgol@2-39-2"),
+                     c("sgol@2-33-0", "sgol@2-33-1"),  
+                     c("sgol@2-33-0", "sgol@2-33-2"),#
+                     c("sgol@2-33-0", "sgol@2-27-1"),  c("sgol@2-33-0", "sgol@2-27-2"))
+
+
+# Inicializa plssum fuera de los bucles (Run desde aqui cada vez que se quiera generar excel)
+
+plssum <- data.frame(matrix(NA, nrow = length(petreatments)*length(regon)*length(validate), ncol = 14))
+colnames(plssum) <- c("N0.","DatasetName", "Wavelength", "pretreat", "variable", "validtype", "colorBy(GR)", "NrLV", "NrObs", "R2Tr", "RMSEC", "R2CV", "RMSECV", "ncomp")
+rownames(plssum) <- 1:(length(petreatments)*length(regon)*length(validate))
+
+l <- 0
+
+
+#Opcion 1)
+# (FOR initial testing) Define una matriz con un unico pls.ncomp para todas las combinaciones
+#para conocer dim de ncomp_matrix mutiplicar regonVar x pret
+#regonVar <- c("Y_MoistureC_percent", "Y_Total_Chlorophyll", "Y_Chlorophyll_A", "Y_Chlorophyll_B", "Y_Total_Carotene")
+#regonVar<-  list(c("Y_pH", "Y_Length", "Y_Length_Scan"))
+regonVar<-  list(c("Y_pH"))
+
+
+ncomp_matrix <- matrix(7, nrow= length(regonVar), ncol= length(petreatments))  # Puedes ajustar estos valores según tus necesidades
+
+# #Opcion 2) 
+# # (FOR optimization) Define una matriz con valor específico de pls.ncomp para cada combinación única de var y pret pls.ncomp para todas las combinaciones 
+# #       #corresponde a var1-pret1, var1-pret2,... var2-pret1, var2-pret2....etc
+#  ncomp_matrix <- matrix(c(3, 5, #var1-pret1, var1-pret2
+#                           7, 4), #var2-pret1, var2-pret2
+#                         ncol = length(petreatments), byrow = TRUE)  # Puedes ajustar estos valores según tus necesidades
+#ncomp_matrix <- matrix(c(15,4,4,4,4,15,4,4,4,4,15,4,4,4,4,15,2,5,2,5,5,3,3,3,3,4,3,3,3,3,15,5,5,2,5,15,5,5,2,5,15,5,5,2,5,5,3,3,3,3,5,3,3,3,3,5,3,3,3,3,15,4,4,4,4,15,4,4,4,4,15,4,4,4,4,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6,15,3,3,3,3,15,6,6,2,6),
+#                          ncol = length(petreatments), byrow = TRUE)  # Puedes ajustar estos valores según tus necesidades
+                         
+
+ # # #Opcion 2) 
+ # # # Define una matriz con un unico pls.ncomp para todas las combinaciones
+ # # #para conocer dim de ncomp_matrix mutiplicar regonVar x pret
+ # regonVar <- c("Y_MoistureC_percent", "Y_Total_Chlorophyll", "Y_Chlorophyll_A", "Y_Chlorophyll_B", "Y_Total_Carotene")
+ # ncomp_matrix <- matrix(10, nrow= length(regonVar), ncol= length(petreatments))  # Puedes ajustar estos valores según tus necesidades
+
+ doc_counter <- 166
+
+for (k in 1:length(regon)) {
+      var <- regon[[k]]  # Extrae la variable de regresión actual
+      
+      for (j in 1:length(validate)) {
+            for (i in 1:length(petreatments)) {
+                  pret <- petreatments[[i]]
+                  valid <- validate[[j]]
+
+                  for (v_index in 1:length(var)) {
+                        v <- var[v_index]
+                        ncomp <- ncomp_matrix[v_index, i]  # Asigna un valor específico de ncomp a cada combinación de var y pret
+                        cu <- gdmm(fullDataPLS, getap(dpt.pre = pret, do.pca = FALSE, pls.colorBy = GR, do.pls = TRUE, pls.ncomp = ncomp, pls.regOn = v, pls.valid = valid, pls.exOut = FALSE))
+                        
+                        
+                        #Nobservations<- nrow(unique(fullDataPLS$header))
+                        plot(cu, pg.fns = paste0("----",doc_counter,"----", DatasetName1, "---", paste0(pret,collapse = "_"), "---", v, "---", Wavelength,"---", "colby_C_Day"))
+                        
+                        doc_counter <- doc_counter + 1
+                        
+                        
+                        plsModel <- cu@.Data[[1]]@plsr$model[[1]]
+                        R2tr <- getR2C(plsModel)
+                        RMSE <- getRMSEC(plsModel)
+                        R2CV <- getR2CV(plsModel)
+                        RMSECV <- getRMSECV(plsModel)
+                        LV <- plsModel$ncomp
+                        Nr <- nrow(plsModel$scores)
+                        
+                        # Añade los resultados a plssum
+                        doc_counter_corrected<-doc_counter - 1 
+                        plssum[i + l, 1] <- doc_counter_corrected
+                        plssum[i + l, 2] <- DatasetName1
+                        plssum[i + l, 3] <- Wavelength
+                        plssum[i + l, 4] <- paste0(pret, collapse = "_")
+                        plssum[i + l, 5] <- v
+                        plssum[i + l, 6] <- valid
+                        plssum[i + l, 7] <- GR
+                        plssum[i + l, 8] <- LV
+                        plssum[i + l, 9] <- Nr
+                        plssum[i + l, 10] <- R2tr
+                        plssum[i + l, 11] <- RMSE
+                        plssum[i + l, 12] <- R2CV
+                        plssum[i + l, 13] <- RMSECV
+                        plssum[i + l, 14] <- ncomp
+                 
+                        print(plssum)
+                                   # Incrementa l en cada iteración
+                        l <- l + 1
+                  }
+            }
+      }
+}
+
+# Guarda en Excel después de completar todos los bucles
+write.xlsx(plssum, "results/plssum_all.xlsx")
+ 
+ 
